@@ -81,18 +81,23 @@ class RWKV_x060(uesModule):
                 x = x.to(dtype=atype, device=dev)
 
                 # TimeMix Layrer Parm
+                rw = model_parm[f'{tmix_layer_id}receptance.weight']
                 kw = model_parm[f'{tmix_layer_id}key.weight']
                 vw = model_parm[f'{tmix_layer_id}value.weight']
-                rw = model_parm[f'{tmix_layer_id}receptance.weight']
                 gw = model_parm[f'{tmix_layer_id}gate.weight']
                 ow = model_parm[f'{tmix_layer_id}output.weight']
 
                 if dds.is_tmp_layer:
-                    gw = gw.to(device=dev, non_blocking=True)
+                    rw = rw.to(device=dev, non_blocking=True)
                     kw = kw.to(device=dev, non_blocking=True)
                     vw = vw.to(device=dev, non_blocking=True)
-                    rw = rw.to(device=dev, non_blocking=True)
+                    gw = gw.to(device=dev, non_blocking=True)
                     ow = ow.to(device=dev, non_blocking=True)
+
+                rmx = model_parm[f'{tmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
+                rrx = model_parm[f'{tmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
+                rmy = model_parm[f'{tmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
+                rry = model_parm[f'{tmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 kmx = model_parm[f'{tmix_layer_id}key.weight_mx'] if wtype == torch.uint8 else x
                 krx = model_parm[f'{tmix_layer_id}key.weight_rx'] if wtype == torch.uint8 else x
@@ -103,11 +108,6 @@ class RWKV_x060(uesModule):
                 vrx = model_parm[f'{tmix_layer_id}value.weight_rx'] if wtype == torch.uint8 else x
                 vmy = model_parm[f'{tmix_layer_id}value.weight_my'] if wtype == torch.uint8 else x
                 vry = model_parm[f'{tmix_layer_id}value.weight_ry'] if wtype == torch.uint8 else x
-
-                rmx = model_parm[f'{tmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
-                rrx = model_parm[f'{tmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
-                rmy = model_parm[f'{tmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
-                rry = model_parm[f'{tmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 gmx = model_parm[f'{tmix_layer_id}gate.weight_mx'] if wtype == torch.uint8 else x
                 grx = model_parm[f'{tmix_layer_id}gate.weight_rx'] if wtype == torch.uint8 else x
@@ -129,7 +129,7 @@ class RWKV_x060(uesModule):
                     model_parm[f'{tmix_layer_id}time_maa_w1'], model_parm[f'{tmix_layer_id}time_maa_w2'], 
                     model_parm[f'{tmix_layer_id}time_decay_w1'], model_parm[f'{tmix_layer_id}time_decay_w2'],
                     model_parm[f'{tmix_layer_id}time_decay'], model_parm[f'{tmix_layer_id}time_first'],
-                    kw, vw, rw, gw, ow,
+                    rw, kw, vw, gw, ow,
                     kmx, krx, kmy, kry,
                     vmx, vrx, vmy, vry,
                     rmx, rrx, rmy, rry,
@@ -139,17 +139,22 @@ class RWKV_x060(uesModule):
                 x = x + x_ln
 
                 if dds.is_tmp_layer:
-                    del kw, vw, rw, gw, ow
+                    del rw, kw, vw, gw, ow
 
                 # ChannelMix Layer Parm
+                rw = model_parm[f'{cmix_layer_id}receptance.weight']
                 kw = model_parm[f'{cmix_layer_id}key.weight']
                 vw = model_parm[f'{cmix_layer_id}value.weight']
-                rw = model_parm[f'{cmix_layer_id}receptance.weight']
 
                 if dds.is_tmp_layer:
+                    rw = rw.to(device=dev, non_blocking=True)
                     kw = kw.to(device=dev, non_blocking=True)
                     vw = vw.to(device=dev, non_blocking=True)
-                    rw = rw.to(device=dev, non_blocking=True)
+
+                rmx = model_parm[f'{cmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
+                rrx = model_parm[f'{cmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
+                rmy = model_parm[f'{cmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
+                rry = model_parm[f'{cmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 kmx = model_parm[f'{cmix_layer_id}key.weight_mx'] if wtype == torch.uint8 else x
                 krx = model_parm[f'{cmix_layer_id}key.weight_rx'] if wtype == torch.uint8 else x
@@ -161,16 +166,11 @@ class RWKV_x060(uesModule):
                 vmy = model_parm[f'{cmix_layer_id}value.weight_my'] if wtype == torch.uint8 else x
                 vry = model_parm[f'{cmix_layer_id}value.weight_ry'] if wtype == torch.uint8 else x
 
-                rmx = model_parm[f'{cmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
-                rrx = model_parm[f'{cmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
-                rmy = model_parm[f'{cmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
-                rry = model_parm[f'{cmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
-
                 x_ln = F.layer_norm(x, (x.shape[-1],), weight=model_parm[block_id+'ln2.weight'], bias=model_parm[block_id+'ln2.bias'])
                 x_ln, states[i*3+2] = RWKV_x060_CMix_one(
                         states[i*3+2], x_ln,
                         model_parm[f'{cmix_layer_id}time_maa_k'], model_parm[f'{cmix_layer_id}time_maa_r'],
-                        kw, vw, rw,
+                        rw, kw, vw,
                         kmx, krx, kmy, kry,
                         vmx, vrx, vmy, vry,
                         rmx, rrx, rmy, rry,  
@@ -178,7 +178,7 @@ class RWKV_x060(uesModule):
                 x = x + x_ln
 
                 if dds.is_tmp_layer:              
-                    del kw, vw, rw
+                    del rw, kw, vw
 
                 if self.rescale_layer > 0:
                     if (i+1) % self.rescale_layer == 0:
@@ -216,18 +216,23 @@ class RWKV_x060(uesModule):
                 x = x.to(dtype=atype, device=dev)
 
                 # TimeMix Layrer Parm
+                rw = model_parm[f'{tmix_layer_id}receptance.weight']
                 kw = model_parm[f'{tmix_layer_id}key.weight']
                 vw = model_parm[f'{tmix_layer_id}value.weight']
-                rw = model_parm[f'{tmix_layer_id}receptance.weight']
                 gw = model_parm[f'{tmix_layer_id}gate.weight']
                 ow = model_parm[f'{tmix_layer_id}output.weight']
 
                 if dds.is_tmp_layer:
-                    gw = gw.to(device=dev, non_blocking=True)
+                    rw = rw.to(device=dev, non_blocking=True)
                     kw = kw.to(device=dev, non_blocking=True)
                     vw = vw.to(device=dev, non_blocking=True)
-                    rw = rw.to(device=dev, non_blocking=True)
+                    gw = gw.to(device=dev, non_blocking=True)
                     ow = ow.to(device=dev, non_blocking=True)
+
+                rmx = model_parm[f'{tmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
+                rrx = model_parm[f'{tmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
+                rmy = model_parm[f'{tmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
+                rry = model_parm[f'{tmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 kmx = model_parm[f'{tmix_layer_id}key.weight_mx'] if wtype == torch.uint8 else x
                 krx = model_parm[f'{tmix_layer_id}key.weight_rx'] if wtype == torch.uint8 else x
@@ -238,11 +243,6 @@ class RWKV_x060(uesModule):
                 vrx = model_parm[f'{tmix_layer_id}value.weight_rx'] if wtype == torch.uint8 else x
                 vmy = model_parm[f'{tmix_layer_id}value.weight_my'] if wtype == torch.uint8 else x
                 vry = model_parm[f'{tmix_layer_id}value.weight_ry'] if wtype == torch.uint8 else x
-
-                rmx = model_parm[f'{tmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
-                rrx = model_parm[f'{tmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
-                rmy = model_parm[f'{tmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
-                rry = model_parm[f'{tmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 gmx = model_parm[f'{tmix_layer_id}gate.weight_mx'] if wtype == torch.uint8 else x
                 grx = model_parm[f'{tmix_layer_id}gate.weight_rx'] if wtype == torch.uint8 else x
@@ -264,7 +264,7 @@ class RWKV_x060(uesModule):
                     model_parm[f'{tmix_layer_id}time_maa_w1'], model_parm[f'{tmix_layer_id}time_maa_w2'], 
                     model_parm[f'{tmix_layer_id}time_decay_w1'], model_parm[f'{tmix_layer_id}time_decay_w2'],
                     model_parm[f'{tmix_layer_id}time_decay'], model_parm[f'{tmix_layer_id}time_first'],
-                    kw, vw, rw, gw, ow,
+                    rw, kw, vw, gw, ow,
                     kmx, krx, kmy, kry,
                     vmx, vrx, vmy, vry,
                     rmx, rrx, rmy, rry,
@@ -274,17 +274,22 @@ class RWKV_x060(uesModule):
                 x = x + x_ln
 
                 if dds.is_tmp_layer:
-                    del kw, vw, rw, gw, ow
+                    del rw, kw, vw, gw, ow
 
                 # ChannelMix Layer Parm
+                rw = model_parm[f'{cmix_layer_id}receptance.weight']
                 kw = model_parm[f'{cmix_layer_id}key.weight']
                 vw = model_parm[f'{cmix_layer_id}value.weight']
-                rw = model_parm[f'{cmix_layer_id}receptance.weight']
 
                 if dds.is_tmp_layer:
+                    rw = rw.to(device=dev, non_blocking=True)
                     kw = kw.to(device=dev, non_blocking=True)
                     vw = vw.to(device=dev, non_blocking=True)
-                    rw = rw.to(device=dev, non_blocking=True)
+
+                rmx = model_parm[f'{cmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
+                rrx = model_parm[f'{cmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
+                rmy = model_parm[f'{cmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
+                rry = model_parm[f'{cmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
 
                 kmx = model_parm[f'{cmix_layer_id}key.weight_mx'] if wtype == torch.uint8 else x
                 krx = model_parm[f'{cmix_layer_id}key.weight_rx'] if wtype == torch.uint8 else x
@@ -296,16 +301,11 @@ class RWKV_x060(uesModule):
                 vmy = model_parm[f'{cmix_layer_id}value.weight_my'] if wtype == torch.uint8 else x
                 vry = model_parm[f'{cmix_layer_id}value.weight_ry'] if wtype == torch.uint8 else x
 
-                rmx = model_parm[f'{cmix_layer_id}receptance.weight_mx'] if wtype == torch.uint8 else x
-                rrx = model_parm[f'{cmix_layer_id}receptance.weight_rx'] if wtype == torch.uint8 else x
-                rmy = model_parm[f'{cmix_layer_id}receptance.weight_my'] if wtype == torch.uint8 else x
-                rry = model_parm[f'{cmix_layer_id}receptance.weight_ry'] if wtype == torch.uint8 else x
-
                 x_ln = F.layer_norm(x, (x.shape[-1],), weight=model_parm[block_id+'ln2.weight'], bias=model_parm[block_id+'ln2.bias'])
                 x_ln, states[i*3+2] = RWKV_x060_CMix_seq(
                         states[i*3+2], x_ln,
                         model_parm[f'{cmix_layer_id}time_maa_k'], model_parm[f'{cmix_layer_id}time_maa_r'],
-                        kw, vw, rw,
+                        rw, kw, vw,
                         kmx, krx, kmy, kry,
                         vmx, vrx, vmy, vry,
                         rmx, rrx, rmy, rry,  
@@ -313,7 +313,7 @@ class RWKV_x060(uesModule):
                 x = x + x_ln
 
                 if dds.is_tmp_layer:               
-                    del kw, vw, rw
+                    del rw, kw, vw
 
                 if self.rescale_layer > 0:
                     if (i+1) % self.rescale_layer == 0:
@@ -333,7 +333,7 @@ class RWKV_x060(uesModule):
 
 
 @useStatic
-def RWKV_x060_TMix_one(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, kw, vw, rw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+def RWKV_x060_TMix_one(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
     xx = x_prev - x_ln
     xxx = x_ln + xx * x_maa
     xxx = torch.tanh(xxx @ tm_w1).view(5, 1, -1)
@@ -405,7 +405,7 @@ if os.environ["RWKV_CUDA_ON"] == '1':
         return WKV_6.apply(state, r, k, v, w, u)
     
     @useStatic
-    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, kw, vw, rw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
         H = t_decay.shape[0]
         N = x_ln.shape[-1] // H
         T = x_ln.shape[0]
@@ -442,7 +442,7 @@ if os.environ["RWKV_CUDA_ON"] == '1':
             
 else:
     @useStatic
-    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, kw, vw, rw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
         H = t_decay.shape[0]
         N = x_ln.shape[-1] // H
         T = x_ln.shape[0]
@@ -482,7 +482,7 @@ else:
         return matmul(out, ow, omx, orx, omy, ory), x_ln[-1,:], state
 
 @useStatic
-def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, kw, vw, rw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
+def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, rw, kw, vw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
     xx = x_prv - x_ln
     kx = x_ln + xx * k_maa
     rx = x_ln + xx * r_maa
@@ -493,7 +493,7 @@ def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, kw, vw, rw, kmx, krx, kmy, kry
     return r * matmul(vx, vw, vmx, vrx, vmy, vry), x_ln
 
 @useStatic
-def RWKV_x060_CMix_seq(x_prvw, x_ln, k_maa, r_maa, kw, vw, rw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
+def RWKV_x060_CMix_seq(x_prvw, x_ln, k_maa, r_maa, rw, kw, vw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
     xx = torch.cat((x_prvw.unsqueeze(0), x_ln[:-1,:])) - x_ln
     kx = x_ln + xx * k_maa
     rx = x_ln + xx * r_maa
