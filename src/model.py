@@ -287,14 +287,14 @@ class RWKV(MyModule):
                 
                 if convert_and_save_and_exit == None:
                     # Load Model parm to RAM
-                    if 'emb.' in x:
-                        self.model_parm[x] = self.model_parm[x].contiguous()
-                    elif (['is_tmp_layer']) and (x.endswith('key.weight') or x.endswith('value.weight') or x.endswith('receptance.weight') or x.endswith('output.weight')):
-                        try:
-                            self.model_parm[x] = self.model_parm[x].contiguous().pin_memory() # if you see "CUDA error: out of memory" here, that's out of CPU RAM, not VRAM. Get more RAM :)
-                        except:
-                            print('Note: You are running out of RAM. Get more CPU RAM. Now this will run much slower.')
-                    elif DEVICE != 'cpu':
+                    # if 'emb.' in x:
+                    #     self.model_parm[x] = self.model_parm[x].to(device=DEVICE).contiguous()
+                    # elif (['is_tmp_layer']) and (x.endswith('key.weight') or x.endswith('value.weight') or x.endswith('receptance.weight') or x.endswith('output.weight')):
+                    #     try:
+                    #         self.model_parm[x] = self.model_parm[x].contiguous().pin_memory() # if you see "CUDA error: out of memory" here, that's out of CPU RAM, not VRAM. Get more RAM :)
+                    #     except:
+                    #         print('Note: You are running out of RAM. Get more CPU RAM. Now this will run much slower.')
+                    if DEVICE != 'cpu':
                         self.model_parm[x] = self.model_parm[x].to(device=DEVICE).contiguous()
                     
                     if (['is_tmp_layer']) or (DEVICE != 'cpu'):
@@ -346,8 +346,8 @@ class RWKV(MyModule):
                 self.rwkv4_model = RWKV_v4(self.model_parm, self.strategy, self.n_layer, self.rescale_layer)
 
             elif self.version == 5.2:
-                from .model_src.RWKV_v5 import RWKV_x050
-                self.rwkv5_model = RWKV_x050(self.model_parm, self.strategy, self.n_layer, self.rescale_layer)
+                from .model_src.RWKV_v5 import RWKV_x052
+                self.rwkv5_model = RWKV_x052(self.model_parm, self.strategy, self.n_layer, self.rescale_layer)
 
             elif self.version == 6.0: # and os.environ["RWKV_CUDA_ON"] == '1':
                 from .model_src.RWKV_v6 import RWKV_x060

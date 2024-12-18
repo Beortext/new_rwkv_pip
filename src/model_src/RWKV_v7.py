@@ -166,7 +166,7 @@ class RWKV_x070(uesModule):
             
                 # if math.isnan(torch.min(x).item()): print(idx, i)
                 if dds.is_tmp_layer:               
-                    del kw, vw, rw
+                    del kw, vw
 
                 if self.rescale_layer > 0:
                     if (i+1) % self.rescale_layer == 0:
@@ -284,7 +284,7 @@ class RWKV_x070(uesModule):
                 x = x + xx
 
                 if dds.is_tmp_layer:               
-                    del kw, vw, rw
+                    del kw, vw
 
                 if self.rescale_layer > 0:
                     if (i+1) % self.rescale_layer == 0:

@@ -67,6 +67,7 @@ if os.environ.get('RWKV_CUDA_ON') == '1':
 
 
     if USE_CUBLAS_GEMM:
+        @MyStatic
         def matmul_float(a, b, output_dtype: Optional[torch.dtype]=None):
             if output_dtype is None:
                 output_dtype = a.dtype
@@ -89,13 +90,15 @@ if os.environ.get('RWKV_CUDA_ON') == '1':
                 torch.ops.mm8_cuda.gemm_fp16_cublas(a, b, c)
                 return c
             else:
-                return (a @ b).to(output_dtype)
+                return (a @ b.to(device=a.device)).to(output_dtype)
     else:
+        @MyStatic
         def matmul_float(a, b, output_dtype: Optional[torch.dtype]=None):
-            return (a @ b).to(output_dtype)
+            return (a @ b.to(device=a.device)).to(output_dtype)
 else:
+    @MyStatic
     def matmul_float(a, b, output_dtype: Optional[torch.dtype]=None):
-        return (a @ b).to(output_dtype)
+        return (a @ b.to(device=a.device)).to(output_dtype)
 
 # =============================================================================
 
@@ -118,12 +121,13 @@ def mm8_one(x, w, mx, rx, my, ry):
     else:
         return torch_mm8(x, w, mx, rx, my, ry)
     
-
+@MyStatic
 def mm8(x: torch.Tensor, w: torch.Tensor, mx: torch.Tensor, rx: torch.Tensor, my: torch.Tensor, ry: torch.Tensor):
     if len(x.shape) == 1:
         return mm8_one(x, w, mx, rx, my, ry)
     return mm8_seq(x, w, mx, rx, my, ry)
 
+@MyStatic
 def matmul(a, b, mx: Optional[torch.Tensor]=None, rx: Optional[torch.Tensor]=None, my: Optional[torch.Tensor]=None, ry: Optional[torch.Tensor]=None, output_dtype: Optional[torch.dtype]=None) -> torch.Tensor:
     if output_dtype is None:
         output_dtype = a.dtype
