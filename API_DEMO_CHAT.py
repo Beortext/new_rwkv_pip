@@ -8,7 +8,7 @@ import os, re
 from prompt_toolkit import prompt
 
 
-os.environ["RWKV_JIT_ON"] = "1"
+os.environ["RWKV_JIT_ON"] = "0"
 os.environ["RWKV_CUDA_ON"] = "1"  # !!! '1' to compile CUDA kernel (10x faster), requires c++ compiler & cuda libraries !!!
 
 os.environ["TORCH_CUDA_ARCH_LIST"] = "6.1" # only support Tesla P40.
@@ -18,12 +18,12 @@ from src.utils import Pipline
 
 ########################################################################################################
 
-name = 'RWKV-5-World-1B5-v2-20231025-ctx4096'
 # RWKV-4-World-0.1B-v1-20230520-ctx4096 RWKV-5-World-1B5-v2-20231025-ctx4096
 # RWKV-x060-World-1B6-v2.1-20240328-ctx4096 RWKV-x070-World-0.1B-v2.8-20241210-ctx4096
 
-strategy = "cuda fp16"  # use CUDA, fp16
-MODEL_NAME = f"/home/beortust/nfs_share/RwkvModelLib/RWKV-x060-ChnNovel-7B-20240803-ctx4096.pth"
+strategy = "cuda fp16i8"  # use CUDA, fp16, only RWKV-7 can use fp16i8 fp32i8, other version have content bug
+MODEL_NAME = f"/home/beortust/nfs_share/RwkvModelLib/RWKV-x070-World-0.1B-v2.8-20241210-ctx4096"
+CTX_LEN = 4096
 
 ########################################################################################################
 STATE_NAME = None # use vanilla zero initial state?
@@ -45,4 +45,4 @@ while True:
     msg = msg.strip()
     msg = re.sub(r"\n+", "\n", msg)
     print("\nAssistant:", end='')
-    states = pipline.generate(f"User: {msg}\n\nAssistant:", 500, states)
+    states = pipline.generate(f"User: {msg}\n\nAssistant:", CTX_LEN, states)
