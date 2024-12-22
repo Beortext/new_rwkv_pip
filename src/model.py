@@ -247,10 +247,11 @@ class RWKV(MyModule):
                     else:
                         flags_w = ('_w1' not in x) and ('_w2' not in x)
                         flagsw = ('w1' not in x) and ('w2' not in x)
-                        flagsa = ('a1' not in x) and ('b2' not in x)
+                        flagsa = ('a1' not in x) and ('a2' not in x)
+                        flagsv = ('v1' not in x) and ('v2' not in x)
                         flagsg = ('g1' not in x) and ('g2' not in x)
 
-                        if (len(self.model_parm[x].shape) == 2) and ('emb' not in x) and flags_w and flagsw and flagsa and flagsg and ('r_k' not in x):
+                        if (len(self.model_parm[x].shape) == 2) and ('emb' not in x) and flags_w and flagsw and flagsa and flagsv and flagsg and ('r_k' not in x):
                             if WTYPE != torch.uint8:
                                 self.model_parm[x] = self.model_parm[x].to(dtype=WTYPE)
                             else:

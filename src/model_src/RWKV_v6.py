@@ -130,9 +130,9 @@ class RWKV_x060(uesModule):
                     model_parm[f'{tmix_layer_id}time_decay_w1'], model_parm[f'{tmix_layer_id}time_decay_w2'],
                     model_parm[f'{tmix_layer_id}time_decay'], model_parm[f'{tmix_layer_id}time_first'],
                     rw, kw, vw, gw, ow,
+                    rmx, rrx, rmy, rry,
                     kmx, krx, kmy, kry,
                     vmx, vrx, vmy, vry,
-                    rmx, rrx, rmy, rry,
                     gmx, grx, gmy, gry,
                     omx, orx, omy, ory,
                 )
@@ -171,9 +171,9 @@ class RWKV_x060(uesModule):
                         states[i*3+2], x_ln,
                         model_parm[f'{cmix_layer_id}time_maa_k'], model_parm[f'{cmix_layer_id}time_maa_r'],
                         rw, kw, vw,
+                        rmx, rrx, rmy, rry,  
                         kmx, krx, kmy, kry,
                         vmx, vrx, vmy, vry,
-                        rmx, rrx, rmy, rry,  
                     )
                 x = x + x_ln
 
@@ -265,9 +265,9 @@ class RWKV_x060(uesModule):
                     model_parm[f'{tmix_layer_id}time_decay_w1'], model_parm[f'{tmix_layer_id}time_decay_w2'],
                     model_parm[f'{tmix_layer_id}time_decay'], model_parm[f'{tmix_layer_id}time_first'],
                     rw, kw, vw, gw, ow,
+                    rmx, rrx, rmy, rry,
                     kmx, krx, kmy, kry,
                     vmx, vrx, vmy, vry,
-                    rmx, rrx, rmy, rry,
                     gmx, grx, gmy, gry,
                     omx, orx, omy, ory,
                 )
@@ -306,9 +306,9 @@ class RWKV_x060(uesModule):
                         states[i*3+2], x_ln,
                         model_parm[f'{cmix_layer_id}time_maa_k'], model_parm[f'{cmix_layer_id}time_maa_r'],
                         rw, kw, vw,
+                        rmx, rrx, rmy, rry,  
                         kmx, krx, kmy, kry,
                         vmx, vrx, vmy, vry,
-                        rmx, rrx, rmy, rry,  
                     )
                 x = x + x_ln
 
@@ -333,7 +333,7 @@ class RWKV_x060(uesModule):
 
 
 @useStatic
-def RWKV_x060_TMix_one(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+def RWKV_x060_TMix_one(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, rmx, rrx, rmy, rry, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, gmx, grx, gmy, gry, omx, orx, omy, ory):
     xx = x_prev - x_ln
     xxx = x_ln + xx * x_maa
     xxx = torch.tanh(xxx @ tm_w1).view(5, 1, -1)
@@ -405,7 +405,7 @@ if os.environ["RWKV_CUDA_ON"] == '1':
         return WKV_6.apply(state, r, k, v, w, u)
     
     @useStatic
-    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, rmx, rrx, rmy, rry, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, gmx, grx, gmy, gry, omx, orx, omy, ory):
         H = t_decay.shape[0]
         N = x_ln.shape[-1] // H
         T = x_ln.shape[0]
@@ -442,7 +442,7 @@ if os.environ["RWKV_CUDA_ON"] == '1':
             
 else:
     @useStatic
-    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry, gmx, grx, gmy, gry, omx, orx, omy, ory):
+    def RWKV_x060_TMix_seq(x_ln, x_prev, state, lx_w, lx_b, x_maa, w_maa, k_maa, v_maa, r_maa, g_maa, tm_w1, tm_w2, td_w1, td_w2, t_decay, t_first, rw, kw, vw, gw, ow, rmx, rrx, rmy, rry, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, gmx, grx, gmy, gry, omx, orx, omy, ory):
         H = t_decay.shape[0]
         N = x_ln.shape[-1] // H
         T = x_ln.shape[0]
@@ -482,7 +482,7 @@ else:
         return matmul(out, ow, omx, orx, omy, ory), x_ln[-1,:], state
 
 @useStatic
-def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, rw, kw, vw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
+def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, rw, kw, vw, rmx, rrx, rmy, rry, kmx, krx, kmy, kry, vmx, vrx, vmy, vry):
     xx = x_prv - x_ln
     kx = x_ln + xx * k_maa
     rx = x_ln + xx * r_maa
@@ -493,8 +493,8 @@ def RWKV_x060_CMix_one(x_prv, x_ln, k_maa, r_maa, rw, kw, vw, kmx, krx, kmy, kry
     return r * matmul(vx, vw, vmx, vrx, vmy, vry), x_ln
 
 @useStatic
-def RWKV_x060_CMix_seq(x_prvw, x_ln, k_maa, r_maa, rw, kw, vw, kmx, krx, kmy, kry, vmx, vrx, vmy, vry, rmx, rrx, rmy, rry):
-    xx = torch.cat((x_prvw.unsqueeze(0), x_ln[:-1,:])) - x_ln
+def RWKV_x060_CMix_seq(x_prv, x_ln, k_maa, r_maa, rw, kw, vw, rmx, rrx, rmy, rry, kmx, krx, kmy, kry, vmx, vrx, vmy, vry):
+    xx = torch.cat((x_prv.unsqueeze(0), x_ln[:-1,:])) - x_ln
     kx = x_ln + xx * k_maa
     rx = x_ln + xx * r_maa
 
