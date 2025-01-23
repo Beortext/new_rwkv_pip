@@ -1,7 +1,3 @@
-########################################################################################################
-# The RWKV Language Model - https://github.com/BlinkDL/RWKV-LM
-########################################################################################################
-
 import types, gc, os, re, os
 import torch
 from torch.nn import functional as F
@@ -47,8 +43,7 @@ class RWKV(MyModule):
         verbose_out(f'RWKV_JIT_ON {os.environ["RWKV_JIT_ON"]} RWKV_CUDA_ON {os.environ["RWKV_CUDA_ON"]} RESCALE_LAYER {self.rescale_layer}\n')
 
         model_path = model_path.strip()
-        if not model_path.endswith('.pth'):
-            model_path += '.pth'
+        model_path = model_path if not model_path.endswith('.pth') else f'{model_path}.pth'
         verbose_out(f'Loading {model_path} ...')
 
         with torch.no_grad():
@@ -354,7 +349,7 @@ class RWKV(MyModule):
                 from .model_src.RWKV_v6 import RWKV_x060
                 self.rwkv6_model = RWKV_x060(self.model_parm, self.strategy, self.n_layer, self.rescale_layer, self.time_state)
 
-            elif self.version >= 7.0:
+            elif self.version == 7.0:
                 from .model_src.RWKV_v7 import RWKV_x070
                 self.rwkv7_model = RWKV_x070(self.model_parm, self.strategy, self.n_layer, self.n_head, self.rescale_layer)
             else:
@@ -375,3 +370,121 @@ class RWKV(MyModule):
             return self.rwkv5_model(tokens, state, full_output)
         else:
             return self.rwkv4_model(tokens, state, full_output)
+
+"""
+### **Class `RWKV`**  
+**Inheritance**: `MyModule`  
+**Responsibility**: Core model class for loading and executing RWKV architectures, supporting multiple model versions and hardware strategies.  
+
+---
+
+#### **Constructor `__init__`**  
+```python  
+def __init__(self, model_path, strategy, is_verbose=True, convert_and_save_and_exit=None)
+```  
+**Key Parameters**:  
+- `model_path` (str): Path to model weights (`.pth` auto-appended if missing)  
+- `strategy` (str): Hardware allocation strategy (e.g., `"cuda fp16 *10+ -> cpu fp32"`)  
+- `is_verbose` (bool): Enable initialization logging  
+- `convert_and_save_and_exit` (str): If provided, converts raw model and saves to path  
+
+**Critical Workflow**:  
+1. **Strategy Validation**:  
+   - Validates strategy format via regex `STRATEGY_REGEX`  
+   - Normalizes strategy string (e.g., `"cuda->cpu"` → `"cuda -> cpu"`)  
+
+2. **Version Detection**:  
+   - Auto-detects model version (4.0/5.x/6.0/7.0+) through parameter patterns  
+   - Identifies critical version markers:  
+     - `ln_x` → v5+  
+     - `time_faaaa` → v6+  
+     - `r_k` → v7+  
+
+3. **Hardware Allocation**:  
+   - Splits strategy into device/dtype rules (e.g., `cuda fp16`, `cpu bf16`)  
+   - Creates layer allocation plan with temporary storage flags  
+   - Generates `self.strategy` list containing per-layer execution configs  
+
+4. **Parameter Processing**:  
+   - Applies version-specific transformations:  
+     - v4: Negative exponential for time_decay  
+     - v5: Reshaped time_first tensors  
+     - v6: Head-wise parameter reorganization  
+     - v7: Attention key flattening  
+   - Implements FP16 overflow prevention via `rescale_layer`  
+   - Handles 8-bit quantization for compatible strategies  
+
+5. **Model Initialization**:  
+   - Loads version-specific implementation:  
+     - `RWKV_v4` → v4 models  
+     - `RWKV_x052` → v5.2 models  
+     - `RWKV_x060` → v6.0 models  
+     - `RWKV_x070` → v7.0 models  
+
+---
+
+#### **Method `forward`**  
+```python  
+def forward(self, tokens, state, full_output=False)  
+```  
+**Execution Flow**:  
+1. Routes computation to version-specific model implementation  
+2. Handles state management for recurrent operations  
+3. Supports full sequence output vs last token optimization  
+
+**Parameters**:  
+- `tokens` (list[int]): Input token sequence  
+- `state` (list[Tensor]): Previous hidden states  
+- `full_output` (bool): Return all timesteps vs final token only  
+
+**Returns**:  
+- Tuple `(logits, new_state)`  
+
+---
+
+### **Key Implementation Details**  
+1. **Strategy Syntax**:  
+   ```  
+   [device] [dtype][quant] [*layers][+]  
+   - device: cuda/cpu/mps/dml  
+   - dtype: fp16/fp32/bf16  
+   - quant: i8/i4/i3 (8/4/3-bit quantization)  
+   - *layers+: Dynamic layer allocation  
+   ```  
+   **Example**: `"cuda fp16i8 *10+ -> cpu fp32 *5"`  
+
+2. **Quantization Scheme**:  
+   - 8-bit weights stored as `uint8`  
+   - Maintains separate scale tensors:  
+     - `_mx/_my`: Zero points  
+     - `_rx/_ry`: Scaling factors  
+
+3. **Version-Specific Optimizations**:  
+   - v4: Channel-wise time decay  
+   - v5+: Head-wise computation  
+   - v6: Enhanced state management  
+   - v7: Linear attention refinement  
+
+4. **Memory Management**:  
+   - Automatic garbage collection after layer loading  
+   - CUDA cache clearing during large tensor processing  
+   - Optional CPU memory pinning for fast transfers  
+
+---
+
+### **Diagnostic Output**  
+**Verbose Mode Shows**:  
+```  
+RWKV_JIT_ON 1 RWKV_CUDA_ON 1 RESCALE_LAYER 6  
+Loading model.pth...  
+Strategy: (total 24+1=25 layers)  
+* cuda fp16i8, Store 20 layers  
+* cpu fp32, Store 5 layers  
+0-cuda-fp16-uint8 1-cuda-fp16-uint8 ... 24-cpu-fp32-fp32  
+
+emb.weight          f32  cuda 1024     (pinned)  
+blocks.0.att.key    i8   cuda 1024 1024  
+blocks.24.ffn.value f32  cpu  4096 1024  
+```  
+Indicates tensor dtype/device/shape and memory pinning status.
+"""
