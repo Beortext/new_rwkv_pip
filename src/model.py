@@ -43,7 +43,7 @@ class RWKV(MyModule):
         verbose_out(f'RWKV_JIT_ON {os.environ["RWKV_JIT_ON"]} RWKV_CUDA_ON {os.environ["RWKV_CUDA_ON"]} RESCALE_LAYER {self.rescale_layer}\n')
 
         model_path = model_path.strip()
-        model_path = model_path if not model_path.endswith('.pth') else f'{model_path}.pth'
+        model_path = model_path if model_path.endswith('.pth') else f'{model_path}.pth'
         verbose_out(f'Loading {model_path} ...')
 
         with torch.no_grad():
